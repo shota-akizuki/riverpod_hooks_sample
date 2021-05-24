@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_hooks_sample/mydata.dart';
-import 'package:riverpod_hooks_sample/slider.dart';
 
-//Providerパターン
+//flutter_riverpodパターン
+
+// 1.グローバル変数にProviderを設定
+final _mydataProvider =
+    StateNotifierProvider<MyData, double>((ref) => MyData());
 
 void main() {
+  // 2.ProviderScopeを設定
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => MyData(),
+    ProviderScope(
       child: MyApp(),
     ),
   );
@@ -40,13 +43,22 @@ class MyHomePage extends StatelessWidget {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Consumer<MyData>(
-            builder: (context, myData, _) => Text(
-              myData.value.toStringAsFixed(2),
+          // 3.ConsumerWidgetを使い、watchを使えるようにする
+          Consumer(builder: (context, watch, child) {
+            return Text(
+              // 4.watch関数にプロバイダーを渡し、stateを取り出す
+              "${watch(_mydataProvider).toStringAsFixed(2)}",
               style: TextStyle(fontSize: 100),
-            ),
-          ),
-          MySlider(),
+            );
+          }),
+          Consumer(builder: (context, watch, child) {
+            return Slider(
+              value: watch(_mydataProvider),
+              // 5.context.readにプロバイダーのnotifierを与えて、メソッドを呼び出す
+              onChanged: (value) =>
+                  context.read(_mydataProvider.notifier).changeState(value),
+            );
+          }),
         ],
       ),
     );
